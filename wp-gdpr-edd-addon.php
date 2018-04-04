@@ -13,7 +13,7 @@
  * @wordpress-plugin
  * Plugin Name:       WP GDPR Easy Digital Downloads addon
  * Description:       Help to handle GDPR regulations in Easy Digital Downloads.
- * Version:           1.0.0
+ * Version:           0.1
  * Text Domain:       wp_gdpr
  * Domain Path:       /languages
  * Author:            Easy Digital Downloads, LLC

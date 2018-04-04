@@ -1,14 +1,14 @@
-=== WP GDPR ===
-Contributors: Mieke Nijs, Sebastian Kurzynowski, AppSaloon
-Tags: Personal data, GDPR, European, regulation, Gravity Forms
+=== WP GDPR - Easy Digital Downloads ===
+Contributors: easydigitaldownloads, cklosows
+Tags: Personal data, GDPR, European, regulation, Easy Digital Downloads
 Requires at least: 4.6.10
-Tested up to: 4.9.2
-Stable tag: 1.0.0
+Tested up to: 4.9.5
+Stable tag: 0.1
 Requires PHP: 5.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-This add-on can be implemented together with the wp-gdpr-core plugin to receive, besides comment data, also the data from Gravity Forms entries.
+This add-on can be implemented together with the wp-gdpr-core plugin to receive, besides comment data, also the data from Easy Digital Downloads entries.
 
 == Description ==
 This add-on works only when you have the wp-gdpr-core plugin activated.
