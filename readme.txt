@@ -13,7 +13,7 @@ This add-on can be implemented together with the wp-gdpr-core plugin to receive,
 == Description ==
 This add-on works only when you have the wp-gdpr-core plugin activated.
 
-With this add-on users can view, update and download their personal data or ask for a removal and this for Gravity Forms entries.
+With this add-on users can view, update and download their personal data or ask for a removal and this for Easy Digital Downloads.
 
 
 == Installation ==
