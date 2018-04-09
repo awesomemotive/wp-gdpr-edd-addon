@@ -71,6 +71,10 @@ class EDD_Model {
 		echo '<h2>' . esc_html( __( 'EDD Customer Simple Shipping Addresses', 'wp_gdpr' ) . ': ' . $email_request ) . '</h2>';
 	}
 
+	public function gdpr_echo_reviews_title( $email_request ) {
+		echo '<h2>' . esc_html( __( 'EDD Reviews', 'wp_gdpr' ) . ': ' . $email_request ) . '</h2>';
+	}
+
 	public function gdpr_echo_message_after_del_request( $email, $request_name ) {
 		if ( isset( $_REQUEST[ $request_name ] ) ) {
 			echo '<h3>' . esc_html( __( 'The site administrator received your request. Thank You.', 'wp_gdpr' ) ) . '</h3>';
@@ -87,7 +91,7 @@ class EDD_Model {
 		if ( ! empty( $entries ) ) {
 			$form_footer = $this->get_form_footer( __FUNCTION__ );
 		} else {
-			$form_footer = '';
+			return;
 		}
 
 		$table = new Gdpr_Table_Builder(
@@ -121,7 +125,6 @@ class EDD_Model {
 	public function get_all_billings_details_with_email( $email_request ) {
 
 		$entries = $this->find_order_with_billing_email_details( $email_request );
-
 
 		$this->email_request = $email_request;
 
@@ -161,9 +164,13 @@ class EDD_Model {
 			'fields'         => 'ids',
 		) );
 
+		if ( empty( $entries ) ) {
+			return array();
+		}
+
 		$payments = edd_get_payments( array(
 			'post__in' => $entries,
-			'number'   => - 1,
+			'number'   => -1,
 			'output'   => 'payments'
 		) );
 
@@ -174,12 +181,11 @@ class EDD_Model {
 
 		$entries = $this->get_all_billing_details_from_customer_with_email( $email_request );
 
-		$this->email_request = $email_request;
-
 		if ( ! empty( $entries ) ) {
+			$this->email_request = $email_request;
 			$form_footer = $this->get_form_footer( __FUNCTION__ );
 		} else {
-			$form_footer = '';
+			return;
 		}
 
 		$table = new Gdpr_Table_Builder(
@@ -243,13 +249,14 @@ class EDD_Model {
 		return $payments;
 	}
 
-	public function gdpr_show_customer_details_details( $email ) {
-		$customer = new \EDD_Customer( $email );
+	public function gdpr_show_customer_details_details( $email_request ) {
+		$customer = new \EDD_Customer( $email_request );
 
 		if ( ! empty( $customer->id ) ) {
+			$this->email_request = $email_request;
 			$form_footer = $this->get_form_footer( __FUNCTION__ );
 		} else {
-			$form_footer = '';
+			return;
 		}
 
 		$customer_data = array(
@@ -278,20 +285,17 @@ class EDD_Model {
 		$table->print_table();
 	}
 
-	public function gdpr_show_customer_shipping_details( $email ) {
-		$customer = new \EDD_Customer( $email );
+	public function gdpr_show_customer_shipping_details( $email_request ) {
+		$customer = new \EDD_Customer( $email_request );
 
 		if ( ! empty( $customer->id ) ) {
+			$this->email_request = $email_request;
 			$form_footer = $this->get_form_footer( __FUNCTION__ );
 		} else {
-			$form_footer = '';
+			return;
 		}
 
-		$entries = array();
-		$shipping_addresses = $customer->get_meta( 'shipping_address', false );
-		if ( ! empty( $shipping_addresses ) ) {
-			$entries = $shipping_addresses;
-		}
+		$entries = $this->get_customer_shipping_addresses( $email_request );
 
 		$table = new Gdpr_Table_Builder(
 			array(
@@ -308,6 +312,78 @@ class EDD_Model {
 		);
 
 		$table->print_table();
+	}
+
+	function get_customer_shipping_addresses( $email ) {
+		$customer = new \EDD_Customer( $email );
+		$entries = array();
+
+		$shipping_addresses = $customer->get_meta( 'shipping_address', false );
+		if ( ! empty( $shipping_addresses ) ) {
+			$entries = $shipping_addresses;
+		}
+
+		return $entries;
+	}
+
+	public function gdpr_show_reviews_by_email( $email_request ) {
+		$reviews = $this->get_reviews_by_email( $email_request );
+
+		if ( ! empty( $reviews ) ) {
+			$this->email_request = $email_request;
+			$form_footer = $this->get_form_footer( __FUNCTION__ );
+		} else {
+			return;
+		}
+
+		$table = new Gdpr_Table_Builder(
+			array(
+				__( 'Review Date', 'wp_gdpr' ),
+				__( 'Review Email', 'wp_gdpr' ),
+				__( 'Review Name', 'wp_gdpr' ),
+				__( 'Review Title', 'wp_gdpr' ),
+				__( 'Review Content', 'wp_gdpr' ),
+				__( 'Review Rating', 'wp_gdpr' ),
+				__( 'Product ID', 'wp_gdpr' ),
+				__( 'IP Address', 'wp_gdpr' ),
+				__( 'Delete', 'wp_gdpr' ),
+			),
+			$reviews,
+			array( $form_footer ),
+			'gdpr_edd_review_data_table'
+		);
+
+		$table->print_table();
+	}
+
+	function get_reviews_by_email( $email ) {
+		global $wpdb;
+		$reviews = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT comment_ID, comment_date, comment_author_email, comment_author, comment_content, comment_post_ID, comment_author_IP
+				 FROM $wpdb->comments
+				 WHERE comment_author_email = '%s'",
+				$email
+			)
+		);
+
+		$entries = array();
+		if ( ! empty( $reviews ) ) {
+			foreach ( $reviews as $review ) {
+				array_push( $entries, array(
+					'review_date'    => $review->comment_date,
+					'review_email'   => $review->comment_author_email,
+					'review_name'    => $review->comment_author,
+					'review_title'   => get_comment_meta( $review->comment_ID, 'edd_review_title', true ),
+					'review_content' => $review->comment_content,
+					'review_rating'  => get_comment_meta( $review->comment_ID, 'edd_rating', true ),
+					'review_product' => $review->comment_post_ID,
+					'review_ip'      => $review->comment_author_IP,
+				) );
+			}
+		}
+
+		return $entries;
 	}
 
 
@@ -368,6 +444,7 @@ class EDD_Model {
 		ob_start();
 		$email      = $this->email_request;
 		$table_name = $function;
+
 		include GDPR_EDD_DIR . 'view/front/form-footer.php';
 
 		return ob_get_clean();
@@ -377,7 +454,6 @@ class EDD_Model {
 		//save in database
 		$user_email = sanitize_email( $_REQUEST['gdpr_email'] );
 
-		global $wpdb;
 		$table_name = sanitize_text_field( $table_name );
 
 		//DOWNLOAD all
@@ -387,9 +463,17 @@ class EDD_Model {
 					$all_entries = $this->get_all_billings_details_with_email( $user_email );
 					$file_name   = 'billing-details-from-orders';
 					break;
-				case 'gdpr_show_user_billing_details':
-					$all_entries = $this->get_all_billing_details_from_user_with_email( $user_email );
-					$file_name   = 'billing-details-from-user-account';
+				case 'gdpr_show_customer_billing_details':
+					$all_entries = $this->get_all_billing_details_from_customer_with_email( $user_email );
+					$file_name   = 'billing-details-from-customer-with-email';
+					break;
+				case 'gdpr_show_customer_shipping_details':
+					$all_entries = $this->get_customer_shipping_addresses( $user_email );
+					$file_name   = 'shipping-addresses-for-customer';
+					break;
+				case 'gdpr_show_reviews_by_email':
+					$all_entries = $this->get_reviews_by_email( $user_email );
+					$file_name   = 'product-reviews-by-email';
 					break;
 				default:
 					return;
@@ -397,20 +481,7 @@ class EDD_Model {
 		}
 
 		if ( ! empty( $all_entries ) ) {
-			$headers = array(
-				__( 'name', 'wp_gdpr' ),
-				__( 'surname', 'wp_gdpr' ),
-				__( 'company', 'wp_gdpr' ),
-				__( 'telephone', 'wp_gdpr' ),
-				__( 'street part 1', 'wp_gdpr' ),
-				__( 'street part 2', 'wp_gdpr' ),
-				__( 'city', 'wp_gdpr' ),
-				__( 'state / province', 'wp_gdpr' ),
-				__( 'zipcode', 'wp_gdpr' ),
-				__( 'country', 'wp_gdpr' ),
-				__( 'e-mail', 'wp_gdpr' ),
-				__( 'order id', 'wp_gdpr' ),
-			);
+			$headers = array_keys( $all_entries[0] );
 
 			//create csv object and download comments
 			try {

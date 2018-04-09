@@ -19,6 +19,7 @@ class Controller_EDD {
 		add_action( 'gdpr_show_entries', array( $this, 'gdpr_edd_simple_shipping_addresses' ), 12 );
 		add_action( 'gdpr_show_entries', array( $this, 'gdpr_edd_show_billing_details' ), 12 );
 		add_action( 'gdpr_show_entries', array( $this, 'gdpr_edd_show_customer_billing_details' ), 12 );
+		add_action( 'gdpr_show_entries', array( $this, 'gdpr_edd_show_email_reviews' ), 12 );
 
 		//save delete request
 		add_action( 'gdpr_save_del_req', array( $this, 'save_del_request' ) );
@@ -223,10 +224,10 @@ class Controller_EDD {
 	 * Show all details about shipping related with request email and user metadata.
 	 *
 	 */
-	public function gdpr_wc_show_shipping_details( $email_request ) {
+	public function gdpr_edd_show_email_reviews( $email_request ) {
 		$model = Gdpr_Container::make( 'wp_gdpr_edd\model\EDD_Model' );
-		$model->gdpr_echo_shipping_title( $email_request );
-		$model->gdpr_show_shipping_entries( $email_request );
+		$model->gdpr_echo_reviews_title( $email_request );
+		$model->gdpr_show_reviews_by_email( $email_request );
 	}
 
 	/**
